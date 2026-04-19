@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบจำลองขนาดอะตอมแบบโต้ตอบ (Interactive Atomic Size)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+
+        /* Animation for element symbol */
+        .symbol-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-700 p-4 shadow-lg z-10 relative">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-xl">
+                    🤔
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Atomic God Mode</h1>
+                    <p class="text-xs text-slate-400">เครื่องมือที่ช่วยให้บรรลุอรหันต์ขั้น 8 เมื่อความเข้าใจระดับอะตอม นำไปสู่การหลุดพ้น</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center justify-center gap-2">
+                <!-- Zoom Controls -->
+                <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-inner">
+                    <button onclick="adjustZoom(-0.1)" class="w-8 h-8 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="ย่อขนาด"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                    <span id="zoom-level-text" class="text-xs text-slate-300 w-12 text-center font-mono select-none">100%</span>
+                    <button onclick="adjustZoom(0.1)" class="w-8 h-8 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="ขยายขนาด"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                    <div class="w-px h-5 bg-slate-600 mx-1"></div>
+                    <button onclick="resetZoom()" class="w-8 h-8 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="คืนค่าเดิม"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                    <button id="mode-single" class="px-4 py-2 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-md" onclick="switchMode('single')">
+                        <i class="fa-solid fa-circle-dot mr-2"></i>โหมดเดี่ยว
+                    </button>
+                    <button id="mode-compare" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white" onclick="switchMode('compare')">
+                        <i class="fa-solid fa-scale-balanced mr-2"></i>เปรียบเทียบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-6 flex flex-col items-center justify-center w-full max-w-7xl mx-auto relative">
+        
+        <!-- Background decorative elements -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+
+        <!-- Single Mode Container -->
+        <div id="container-single" class="w-full flex flex-col lg:flex-row gap-6 transition-all duration-500 opacity-100">
+            <!-- Atom Viewer -->
+            <div class="flex-grow glass-panel rounded-2xl overflow-hidden relative flex flex-col min-h-[500px]">
+                <div class="absolute top-4 left-4 z-10 flex gap-2">
+                    <div class="bg-slate-800/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-600 shadow-lg text-sm">
+                        <span class="text-slate-300">ประจุสุทธิ:</span>
+                        <span id="charge-1" class="font-bold ml-1 text-lg">0</span>
+                    </div>
+                </div>
+                <div class="absolute top-4 right-4 z-10 text-right">
+                    <div id="symbol-1" class="text-5xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] symbol-pop">H</div>
+                    <div id="name-1" class="text-slate-300 text-sm mt-1">ไฮโดรเจน (Hydrogen)</div>
+                </div>
+                <div class="absolute bottom-4 left-0 w-full text-center z-10 pointer-events-none">
+                    <div class="inline-block bg-slate-900/60 backdrop-blur px-4 py-2 rounded-full border border-slate-700/50">
+                        <span class="text-xs text-slate-400 mr-2">แนวโน้มขนาด (อ้างอิง):</span>
+                        <span id="size-indicator-1" class="text-cyan-400 font-mono font-bold">100 หน่วย</span>
+                    </div>
+                </div>
+                
+                <canvas id="canvas-1" class="w-full h-full absolute inset-0 cursor-crosshair"></canvas>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
+                <!-- Element Selector -->
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h2 class="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider"><i class="fa-solid fa-list-ol mr-2 text-indigo-400"></i>เลือกธาตุสำเร็จรูป</h2>
+                    <select id="preset-1" onchange="loadPreset(1, this.value)" class="w-full bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer custom-scrollbar">
+                        <option value="0">--- โหมดอิสระ (Custom) ---</option>
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+
+                <!-- Particle Adjuster -->
+                <div class="glass-panel p-5 rounded-2xl flex-grow flex flex-col gap-6">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-sliders mr-2 text-purple-400"></i>ปรับแต่งอนุภาค</h2>
+                    
+                    <!-- Protons -->
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-red-500/20">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-red-400 font-medium"><i class="fa-solid fa-plus-circle mr-1"></i> โปรตอน (p⁺)</span>
+                            <span id="p-count-1" class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-sm font-bold">1</span>
+                        </div>
+                        <div class="flex justify-between items-center gap-3">
+                            <button onclick="changeParticle(1, 'p', -1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-red-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
+                            <div class="text-xs text-center text-slate-400 flex-grow">ดึงดูดให้ขนาด<span class="text-red-400 font-bold ml-1">เล็กลง</span></div>
+                            <button onclick="changeParticle(1, 'p', 1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-red-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Electrons -->
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-blue-500/20">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-blue-400 font-medium"><i class="fa-solid fa-minus-circle mr-1"></i> อิเล็กตรอน (e⁻)</span>
+                            <span id="e-count-1" class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-sm font-bold">1</span>
+                        </div>
+                        <div class="flex justify-between items-center gap-3">
+                            <button onclick="changeParticle(1, 'e', -1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-blue-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
+                            <div class="text-xs text-center text-slate-400 flex-grow">ผลักกันให้ขนาด<span class="text-blue-400 font-bold ml-1">ใหญ่ขึ้น</span></div>
+                            <button onclick="changeParticle(1, 'e', 1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-blue-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Shell Info -->
+                    <div class="mt-auto pt-4 border-t border-slate-700 text-center">
+                        <p class="text-xs text-slate-400 mb-1">การจัดเรียงอิเล็กตรอน (Electron Config)</p>
+                        <div id="config-1" class="font-mono text-indigo-300 font-bold text-lg tracking-widest">1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Mode Container (Hidden by default) -->
+        <div id="container-compare" class="w-full hidden flex-col md:flex-row gap-4 h-[600px] transition-all duration-500 opacity-0">
+            <!-- Inject via JS -->
+        </div>
+
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="w-full bg-slate-900 border-t border-slate-800 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-slate-500">
+                พัฒนาโดย <span class="text-indigo-400 font-semibold tracking-wide">lnwtoon005</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Info modal -->
+    <div class="fixed bottom-4 right-4 z-20">
+        <button onclick="document.getElementById('info-modal').classList.remove('hidden')" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 transition-all shadow-lg flex items-center justify-center">
+            <i class="fa-solid fa-info"></i>
+        </button>
+    </div>
+
+    <div id="info-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-book-open mr-2 text-indigo-400"></i> หลักการขนาดอะตอม</h3>
+                <button onclick="document.getElementById('info-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="text-slate-300 text-sm space-y-4">
+                <p>ขนาดของอะตอมในแบบจำลองนี้ คำนวณจาก 3 ปัจจัยหลัก:</p>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong class="text-purple-400">ระดับชั้นพลังงาน (Shells):</strong> เป็นปัจจัยหลักที่ทำให้ขนาดใหญ่ขึ้นแบบก้าวกระโดด ยิ่งมีชั้นวงโคจรมาก อะตอมยิ่งใหญ่</li>
+                    <li><strong class="text-red-400">จำนวนโปรตอน (Z):</strong> โปรตอนในนิวเคลียสมีประจุบวก ยิ่งมีมากจะยิ่งดึงดูดอิเล็กตรอนเข้าหาตัว ทำให้วงโคจร <span class="text-red-400">หดเล็กลงอย่างชัดเจน</span> (Effective Nuclear Charge)</li>
+                    <li><strong class="text-blue-400">จำนวนอิเล็กตรอน (e⁻):</strong> อิเล็กตรอนมีประจุลบ ยิ่งรับเพิ่มในชั้นเดียวกันจะเกิดแรงผลักกันเองสูงมาก ทำให้วงโคจร <span class="text-blue-400">ขยายใหญ่ขึ้นอย่างชัดเจน</span> (เห็นผลชัดมากในไอออนลบ)</li>
+                </ul>
+                <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 mt-4 text-xs">
+                    * หมายเหตุ: นี่เป็นแบบจำลองที่ปรับสัดส่วนการมองเห็นเพื่อให้เห็นภาพเปรียบเทียบชัดเจน การเรียงอิเล็กตรอนใช้ตาม <strong>หลักการเอาฟบาว (Aufbau Principle)</strong> เช่น ธาตุที่ 21 (Sc) จะบรรจุ 4s ก่อน 3d ทำให้จัดเรียงเป็น 2, 8, 9, 2
+                </div>
+            </div>
+            <button onclick="document.getElementById('info-modal').classList.add('hidden')" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition-colors">เข้าใจแล้ว</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Zoom Control ---
+        let globalZoom = 1.0;
+        function adjustZoom(delta) {
+            globalZoom += delta;
+            globalZoom = Math.max(0.5, Math.min(globalZoom, 3.0)); // Limit scale from 50% to 300%
+            document.getElementById('zoom-level-text').textContent = Math.round(globalZoom * 100) + '%';
+        }
+        function resetZoom() {
+            globalZoom = 1.0;
+            document.getElementById('zoom-level-text').textContent = '100%';
+        }
+
+        // --- 1. Scientific Data ---
+        // First 30 elements data (Added up to Zinc for Transition Metals d-orbital showcase)
+        const elementsData = [
+            { z: 1, sym: "H", name: "ไฮโดรเจน (Hydrogen)" },
+            { z: 2, sym: "He", name: "ฮีเลียม (Helium)" },
+            { z: 3, sym: "Li", name: "ลิเทียม (Lithium)" },
+            { z: 4, sym: "Be", name: "เบริลเลียม (Beryllium)" },
+            { z: 5, sym: "B", name: "โบรอน (Boron)" },
+            { z: 6, sym: "C", name: "คาร์บอน (Carbon)" },
+            { z: 7, sym: "N", name: "ไนโตรเจน (Nitrogen)" },
+            { z: 8, sym: "O", name: "ออกซิเจน (Oxygen)" },
+            { z: 9, sym: "F", name: "ฟลูออรีน (Fluorine)" },
+            { z: 10, sym: "Ne", name: "นีออน (Neon)" },
+            { z: 11, sym: "Na", name: "โซเดียม (Sodium)" },
+            { z: 12, sym: "Mg", name: "แมกนีเซียม (Magnesium)" },
+            { z: 13, sym: "Al", name: "อะลูมิเนียม (Aluminum)" },
+            { z: 14, sym: "Si", name: "ซิลิคอน (Silicon)" },
+            { z: 15, sym: "P", name: "ฟอสฟอรัส (Phosphorus)" },
+            { z: 16, sym: "S", name: "กำมะถัน (Sulfur)" },
+            { z: 17, sym: "Cl", name: "คลอรีน (Chlorine)" },
+            { z: 18, sym: "Ar", name: "อาร์กอน (Argon)" },
+            { z: 19, sym: "K", name: "โพแทสเซียม (Potassium)" },
+            { z: 20, sym: "Ca", name: "แคลเซียม (Calcium)" },
+            { z: 21, sym: "Sc", name: "สแกนเดียม (Scandium)" },
+            { z: 22, sym: "Ti", name: "ไทเทเนียม (Titanium)" },
+            { z: 23, sym: "V", name: "วาเนเดียม (Vanadium)" },
+            { z: 24, sym: "Cr", name: "โครเมียม (Chromium)" },
+            { z: 25, sym: "Mn", name: "แมงกานีส (Manganese)" },
+            { z: 26, sym: "Fe", name: "เหล็ก (Iron)" },
+            { z: 27, sym: "Co", name: "โคบอลต์ (Cobalt)" },
+            { z: 28, sym: "Ni", name: "นิกเกิล (Nickel)" },
+            { z: 29, sym: "Cu", name: "ทองแดง (Copper)" },
+            { z: 30, sym: "Zn", name: "สังกะสี (Zinc)" }
+        ];
+
+        // Fill dropdowns
+        function populateDropdowns() {
+            const selects = [document.getElementById('preset-1'), document.getElementById('preset-c1'), document.getElementById('preset-2')];
+            let optionsHTML = '';
+            elementsData.forEach(el => {
+                optionsHTML += `<option value="${el.z}">${el.z}. ${el.sym} - ${el.name}</option>`;
+            });
+            selects.forEach(select => {
+                if(select) select.innerHTML += optionsHTML;
+            });
+        }
+
+        // Logic to calculate shell configuration based on total electrons
+        // ** ปรับใช้อัลกอริทึมตามหลักการเอาฟบาว (Aufbau Principle) สำหรับบรรจุระดับพลังงานย่อย (s, p, d, f) **
+        function calculateShells(electrons) {
+            let shells = [];
+            let e = electrons;
+            
+            // ลำดับการบรรจุตามระดับพลังงาน (Subshell filling order)
+            const aufbau = [
+                {n: 1, max: 2},   // 1s
+                {n: 2, max: 2},   // 2s
+                {n: 2, max: 6},   // 2p
+                {n: 3, max: 2},   // 3s
+                {n: 3, max: 6},   // 3p
+                {n: 4, max: 2},   // 4s  (บรรจุก่อน 3d)
+                {n: 3, max: 10},  // 3d  (สำหรับธาตุ Transition เช่น e=21 จะมาตกตรงนี้ ทำให้ n=3 เพิ่มจาก 8 เป็น 9)
+                {n: 4, max: 6},   // 4p
+                {n: 5, max: 2},   // 5s
+                {n: 4, max: 10},  // 4d
+                {n: 5, max: 6}    // 5p
+            ];
+            
+            for (let subshell of aufbau) {
+                if (e <= 0) break;
+                let fill = Math.min(e, subshell.max);
+                
+                // ตรวจสอบให้แน่ใจว่า array มีช่องว่างพอสำหรับระดับพลังงานหลัก n
+                while(shells.length < subshell.n) {
+                    shells.push(0);
+                }
+                
+                // บวกอิเล็กตรอนเข้าไปในระดับพลังงานหลัก (n) ที่ตรงกัน
+                shells[subshell.n - 1] += fill;
+                e -= fill;
+            }
+
+            // Exceptions สำหรับการจำลองพื้นฐาน: ธาตุ 24 (Cr) และ 29 (Cu) มีการจัดเรียงที่เสถียรกว่า (Half-filled / Full-filled d-orbital)
+            if (electrons === 24) { shells[2] = 13; shells[3] = 1; }
+            if (electrons === 29) { shells[2] = 18; shells[3] = 1; }
+
+            return shells;
+        }
+
+        // Calculate visual scale unit representing atomic radius
+        function calculateVisualScale(protons, electrons) {
+            const shells = calculateShells(electrons);
+            const shellCount = Math.max(1, shells.length); 
+            
+            // 1. ขนาดพื้นฐานตามจำนวนวงโคจร (เพิ่มวง = กระโดดขยาย)
+            let baseSize = 40 + (shellCount * 38); 
+            
+            // 2. ผลของประจุสุทธิ (อิทธิพลแรงดึง/แรงผลัก)
+            let chargeDiff = electrons - protons; 
+            let sizeAdjustment = chargeDiff * 10; 
+
+            // 3. แนวโน้มขนาดอะตอมตามคาบ 
+            let valenceE = shells.length > 0 ? shells[shells.length - 1] : 0;
+            let periodShrink = valenceE * 2.5; 
+            
+            let finalSize = baseSize + sizeAdjustment - periodShrink;
+            
+            // ควบคุมไม่ให้ขนาดเล็กหรือใหญ่จนเกินหน้าจอในตอนเริ่มต้น
+            return Math.max(25, Math.min(finalSize, 350)); 
+        }
+
+        // Determine symbol and charge text
+        function getSymbolAndCharge(p, e) {
+            let symbol = "X";
+            let name = "ธาตุสมมติ (Unknown)";
+            
+            let el = elementsData.find(el => el.z === p);
+            if (el) {
+                symbol = el.sym;
+                name = el.name;
+            }
+
+            let chargeVal = p - e;
+            let chargeStr = "0";
+            let chargeColor = "text-slate-300";
+
+            if (chargeVal > 0) {
+                chargeStr = `+${chargeVal}`;
+                chargeColor = "text-red-400";
+            } else if (chargeVal < 0) {
+                chargeStr = `${chargeVal}`;
+                chargeColor = "text-blue-400";
+            }
+
+            let displaySymbol = symbol;
+            if(chargeVal !== 0) {
+                if(Math.abs(chargeVal) === 1) {
+                    displaySymbol += `<sup>${chargeVal > 0 ? '+' : '-'}</sup>`;
+                } else {
+                    displaySymbol += `<sup>${Math.abs(chargeVal)}${chargeVal > 0 ? '+' : '-'}</sup>`;
+                }
+            }
+
+            return { symbol: displaySymbol, name, chargeStr, chargeColor, chargeVal };
+        }
+
+        // --- DOM Update Helper ---
+        function safeUpdateDOM(id, value, isHTML = false, colorClass = null) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (value !== undefined) {
+                    if (isHTML) el.innerHTML = value;
+                    else el.textContent = value;
+                }
+                if (colorClass !== null) {
+                    el.className = el.className.replace(/text-[a-z]+-\d+/g, '').trim() + ' ' + colorClass;
+                }
+            }
+        }
+
+        // --- 2. Atom Engine (Canvas Logic) ---
+        class AtomVisualizer {
+            constructor(id) {
+                this.id = id;
+                this.canvas = document.getElementById(`canvas-${id}`);
+                if(!this.canvas) return;
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.protons = 1;
+                this.electrons = 1;
+                
+                this.currentVisualScale = calculateVisualScale(1, 1);
+                this.targetVisualScale = this.currentVisualScale;
+
+                this.time = 0;
+                
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+
+            resizeCanvas() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                this.ctx.scale(dpr, dpr);
+                this.width = rect.width;
+                this.height = rect.height;
+            }
+
+            setParticles(p, e) {
+                this.protons = Math.max(1, Math.min(p, 50)); 
+                this.electrons = Math.max(0, Math.min(e, 50));
+                this.targetVisualScale = calculateVisualScale(this.protons, this.electrons);
+                this.updateUI();
+            }
+
+            updateUI() {
+                const info = getSymbolAndCharge(this.protons, this.electrons);
+                const shells = calculateShells(this.electrons);
+                const configText = shells.length > 0 ? shells.join(" , ") : "0";
+                const sizeText = Math.round(this.targetVisualScale) + " หน่วย";
+
+                // Update Single Mode UI
+                if(this.id === 1 && currentMode === 'single') {
+                    safeUpdateDOM(`symbol-1`, info.symbol, true);
+                    const symEl = document.getElementById(`symbol-1`);
+                    if(symEl){ symEl.classList.remove('symbol-pop'); void symEl.offsetWidth; symEl.classList.add('symbol-pop'); }
+                    
+                    safeUpdateDOM(`name-1`, info.name);
+                    safeUpdateDOM(`charge-1`, info.chargeStr, false, info.chargeColor);
+                    safeUpdateDOM(`p-count-1`, this.protons);
+                    safeUpdateDOM(`e-count-1`, this.electrons);
+                    safeUpdateDOM(`config-1`, configText);
+                    safeUpdateDOM(`size-indicator-1`, sizeText);
+                    
+                    const presetEl = document.getElementById(`preset-1`);
+                    if(presetEl) {
+                        presetEl.value = (this.protons === this.electrons && this.protons <= 30) ? this.protons : "0";
+                    }
+                }
+
+                // Update Compare Mode UI (c1 for Atom 1, 2 for Atom 2)
+                const cId = this.id === 1 ? 'c1' : '2';
+                safeUpdateDOM(`symbol-${cId}`, info.symbol, true);
+                safeUpdateDOM(`charge-${cId}`, info.chargeStr, false, info.chargeColor);
+                safeUpdateDOM(`p-count-${cId}`, `${this.protons} p⁺`);
+                safeUpdateDOM(`e-count-${cId}`, `${this.electrons} e⁻`);
+                safeUpdateDOM(`size-indicator-${cId}`, sizeText);
+                
+                const presetC = document.getElementById(`preset-${cId}`);
+                if(presetC) {
+                    presetC.value = (this.protons === this.electrons && this.protons <= 30) ? this.protons : "0";
+                }
+            }
+
+            draw() {
+                if(!this.ctx) return;
+                
+                const ctx = this.ctx;
+                const cx = this.width / 2;
+                const cy = this.height / 2;
+
+                ctx.clearRect(0, 0, this.width, this.height);
+
+                this.currentVisualScale += (this.targetVisualScale - this.currentVisualScale) * 0.1;
+                
+                const minDimension = Math.min(this.width, this.height);
+                const maxAllowedRadius = minDimension * 0.45; 
+                const scaleFactor = maxAllowedRadius / 350; 
+                
+                // --- ผนวก Global Zoom ที่ผู้ใช้ปรับค่า ---
+                const pxScale = this.currentVisualScale * scaleFactor * globalZoom;
+                const objectScale = Math.max(0.6, Math.min(1.2, scaleFactor * 1.5)) * globalZoom;
+                
+                const shells = calculateShells(this.electrons);
+                const maxShells = Math.max(1, shells.length);
+                const orbitSpacing = pxScale / maxShells;
+
+                // 1. Draw Orbits (Shells)
+                ctx.lineWidth = 1;
+                for (let i = 0; i < maxShells; i++) {
+                    const radius = orbitSpacing * (i + 1);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    let alpha = i < shells.length ? 0.3 : 0.1;
+                    ctx.strokeStyle = `rgba(165, 180, 252, ${alpha})`;
+                    if (i > 0) ctx.setLineDash([5, 5]);
+                    else ctx.setLineDash([]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // 2. Draw Electrons 
+                for (let s = 0; s < shells.length; s++) {
+                    const eInShell = shells[s];
+                    const radius = orbitSpacing * (s + 1);
+                    
+                    const speed = 0.02 / (s + 1);
+                    this.time += speed * 0.1;
+
+                    // ปรับจำนวนสถานีสูงสุดในแต่ละระดับพลังงานหลัก (2, 8, 18, 32...)
+                    const maxEInShell = [2, 8, 18, 32, 50][s] || 32;
+                    const maxStations = Math.ceil(maxEInShell / 2);
+                    
+                    let stations = new Array(maxStations).fill(0);
+                    if (s === 0) {
+                        stations[0] = Math.min(2, eInShell);
+                    } else {
+                        let remainingE = eInShell;
+                        for (let j = 0; j < maxStations && remainingE > 0; j++) {
+                            stations[j]++;
+                            remainingE--;
+                        }
+                        for (let j = 0; j < maxStations && remainingE > 0; j++) {
+                            stations[j]++;
+                            remainingE--;
+                        }
+                    }
+
+                    for (let j = 0; j < maxStations; j++) {
+                        if (stations[j] === 0) continue;
+                        
+                        const stationAngle = (Math.PI * 2 / maxStations) * j;
+                        
+                        const drawE = (offsetAngle) => {
+                            const finalAngle = stationAngle + offsetAngle + this.time;
+                            const ex = cx + Math.cos(finalAngle) * radius;
+                            const ey = cy + Math.sin(finalAngle) * radius;
+
+                            const gradient = ctx.createRadialGradient(ex, ey, 0, ex, ey, 6 * objectScale);
+                            gradient.addColorStop(0, 'rgba(96, 165, 250, 1)'); 
+                            gradient.addColorStop(1, 'rgba(96, 165, 250, 0)');
+                            
+                            ctx.beginPath();
+                            ctx.arc(ex, ey, 6 * objectScale, 0, Math.PI * 2);
+                            ctx.fillStyle = gradient;
+                            ctx.fill();
+
+                            ctx.beginPath();
+                            ctx.arc(ex, ey, 2.5 * objectScale, 0, Math.PI * 2);
+                            ctx.fillStyle = '#bfdbfe';
+                            ctx.fill();
+                        };
+
+                        if (stations[j] === 1) {
+                            drawE(0); 
+                        } else if (stations[j] === 2) {
+                            drawE(-0.12);
+                            drawE(0.12);
+                        }
+                    }
+                }
+
+                // 3. Draw Nucleus
+                const charge = this.protons - this.electrons;
+                let coreColor = 'rgba(148, 163, 184, 1)'; 
+                let glowColor = 'rgba(148, 163, 184, 0.4)';
+                
+                if (charge > 0) {
+                    coreColor = 'rgba(248, 113, 113, 1)'; 
+                    glowColor = 'rgba(248, 113, 113, 0.5)';
+                } else if (charge < 0) {
+                    coreColor = 'rgba(96, 165, 250, 1)'; 
+                    glowColor = 'rgba(96, 165, 250, 0.5)';
+                }
+
+                const nucleusRadius = (12 + Math.sqrt(this.protons) * 2) * objectScale;
+
+                const nucGradient = ctx.createRadialGradient(cx, cy, nucleusRadius * 0.5, cx, cy, nucleusRadius * 2.5);
+                nucGradient.addColorStop(0, coreColor);
+                nucGradient.addColorStop(1, 'rgba(0,0,0,0)');
+                
+                ctx.beginPath();
+                ctx.arc(cx, cy, nucleusRadius * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = nucGradient;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, nucleusRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#1e293b';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = coreColor;
+                ctx.stroke();
+
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${Math.max(10, 14 * objectScale)}px Prompt`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`${this.protons}p⁺`, cx, cy);
+            }
+        }
+
+        // --- 3. App State & Controllers ---
+        
+        let atom1, atom2;
+        let animationFrameId;
+        let currentMode = 'single';
+
+        function initApp() {
+            setupCompareUI(); 
+            populateDropdowns();
+            
+            atom1 = new AtomVisualizer(1);
+            atom1.setParticles(1, 1); 
+
+            renderLoop();
+        }
+
+        function renderLoop() {
+            if(atom1) atom1.draw();
+            if(atom2 && currentMode === 'compare') atom2.draw();
+            animationFrameId = requestAnimationFrame(renderLoop);
+        }
+
+        function changeParticle(atomId, type, delta) {
+            const atom = atomId === 1 ? atom1 : atom2;
+            if(!atom) return;
+
+            let p = atom.protons;
+            let e = atom.electrons;
+
+            if (type === 'p') p += delta;
+            if (type === 'e') e += delta;
+
+            atom.setParticles(p, e);
+        }
+
+        function loadPreset(atomId, zStr) {
+            const z = parseInt(zStr);
+            if(z === 0) return; 
+            
+            const atom = atomId === 1 ? atom1 : atom2;
+            if(!atom) return;
+
+            atom.setParticles(z, z);
+        }
+
+        // --- 4. Mode Switching UI Logic ---
+        
+        function setupCompareUI() {
+            const compareContainer = document.getElementById('container-compare');
+            
+            const leftCol = `
+                <div class="flex-1 flex flex-col gap-3">
+                    <div class="glass-panel p-3 rounded-xl flex flex-col gap-3">
+                        <select id="preset-c1" onchange="loadPreset(1, this.value)" class="bg-slate-800 border border-slate-600 text-white rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-500">
+                            <option value="0">กำหนดเอง (Custom)</option>
+                        </select>
+                        <div class="flex justify-between items-center text-sm bg-slate-900/50 p-2 rounded-lg border border-slate-700">
+                            <div class="flex items-center gap-1">
+                                <button onclick="changeParticle(1, 'p', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">-</button>
+                                <span class="text-red-400 w-12 text-center font-bold" id="p-count-c1">1 p⁺</span>
+                                <button onclick="changeParticle(1, 'p', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">+</button>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="changeParticle(1, 'e', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">-</button>
+                                <span class="text-blue-400 w-12 text-center font-bold" id="e-count-c1">1 e⁻</span>
+                                <button onclick="changeParticle(1, 'e', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow glass-panel rounded-2xl relative min-h-[350px] overflow-hidden flex items-center justify-center" id="canvas-wrapper-1">
+                        <!-- Canvas 1 moves here -->
+                    </div>
+                    <div class="p-3 glass-panel rounded-xl flex justify-between items-center px-6">
+                        <div class="text-3xl font-bold text-white drop-shadow-lg" id="symbol-c1">H</div>
+                        <div class="text-right">
+                            <div class="text-sm text-slate-300">ประจุ: <span id="charge-c1" class="font-bold text-lg">0</span></div>
+                            <div class="text-xs text-slate-400 mt-1">ขนาด: <span id="size-indicator-c1" class="text-cyan-400 font-bold"></span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const rightCol = `
+                <div class="flex-1 flex flex-col gap-3">
+                    <div class="glass-panel p-3 rounded-xl flex flex-col gap-3">
+                        <select id="preset-2" onchange="loadPreset(2, this.value)" class="bg-slate-800 border border-slate-600 text-white rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-500">
+                            <option value="0">กำหนดเอง (Custom)</option>
+                        </select>
+                        <div class="flex justify-between items-center text-sm bg-slate-900/50 p-2 rounded-lg border border-slate-700">
+                            <div class="flex items-center gap-1">
+                                <button onclick="changeParticle(2, 'p', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">-</button>
+                                <span class="text-red-400 w-12 text-center font-bold" id="p-count-2">2 p⁺</span>
+                                <button onclick="changeParticle(2, 'p', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">+</button>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="changeParticle(2, 'e', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">-</button>
+                                <span class="text-blue-400 w-12 text-center font-bold" id="e-count-2">2 e⁻</span>
+                                <button onclick="changeParticle(2, 'e', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow glass-panel rounded-2xl relative min-h-[350px] overflow-hidden flex items-center justify-center">
+                        <canvas id="canvas-2" class="w-full h-full absolute inset-0"></canvas>
+                    </div>
+                    <div class="p-3 glass-panel rounded-xl flex justify-between items-center px-6">
+                        <div class="text-3xl font-bold text-white drop-shadow-lg" id="symbol-2">He</div>
+                        <div class="text-right">
+                            <div class="text-sm text-slate-300">ประจุ: <span id="charge-2" class="font-bold text-lg">0</span></div>
+                            <div class="text-xs text-slate-400 mt-1">ขนาด: <span id="size-indicator-2" class="text-cyan-400 font-bold"></span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            compareContainer.innerHTML = leftCol + rightCol;
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnSingle = document.getElementById('mode-single');
+            const btnCompare = document.getElementById('mode-compare');
+            const containerSingle = document.getElementById('container-single');
+            const containerCompare = document.getElementById('container-compare');
+            const canvas1 = document.getElementById('canvas-1');
+
+            if (mode === 'single') {
+                btnSingle.className = "px-4 py-2 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-md";
+                btnCompare.className = "px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white";
+                
+                containerCompare.classList.add('opacity-0');
+                setTimeout(() => {
+                    containerCompare.classList.add('hidden');
+                    containerCompare.classList.remove('flex');
+                    
+                    containerSingle.querySelector('.glass-panel').appendChild(canvas1);
+                    
+                    containerSingle.classList.remove('hidden');
+                    void containerSingle.offsetWidth;
+                    
+                    atom1.resizeCanvas(); 
+                    
+                    containerSingle.classList.remove('opacity-0');
+                    containerSingle.classList.add('opacity-100');
+                    
+                    atom1.updateUI();
+                }, 300);
+
+            } else {
+                btnCompare.className = "px-4 py-2 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-md";
+                btnSingle.className = "px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white";
+                
+                containerSingle.classList.remove('opacity-100');
+                containerSingle.classList.add('opacity-0');
+                
+                setTimeout(() => {
+                    containerSingle.classList.add('hidden');
+                    
+                    containerCompare.classList.remove('hidden');
+                    containerCompare.classList.add('flex');
+                    
+                    document.getElementById('canvas-wrapper-1').appendChild(canvas1);
+                    
+                    if(!atom2) {
+                        atom2 = new AtomVisualizer(2);
+                        // ตั้งค่าเริ่มต้นของตัวที่ 2 ให้เป็นธาตุถัดไปจากตัวที่ 1 ไม่เกิน 30
+                        let nextZ = Math.min(30, atom1.protons + 1);
+                        atom2.setParticles(nextZ, nextZ); 
+                    }
+
+                    atom1.resizeCanvas();
+                    atom2.resizeCanvas();
+                    atom1.updateUI();
+                    atom2.updateUI();
+
+                    void containerCompare.offsetWidth;
+                    containerCompare.classList.remove('opacity-0');
+                    containerCompare.classList.add('opacity-100');
+                }, 300);
+            }
+        }
+
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
