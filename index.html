@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ป้องกันการซูมหน้าจอจากการใช้สองนิ้วถ่าง หรือ Double-tap บนบางอุปกรณ์ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>แบบจำลองขนาดอะตอมแบบโต้ตอบ (Interactive Atomic Size)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -14,6 +15,11 @@
             background-color: #0f172a;
             color: #f8fafc;
             overflow-x: hidden;
+        }
+
+        /* ป้องกัน Double-tap Zoom บน iPad / iOS สำหรับปุ่มต่างๆ */
+        button, select, input {
+            touch-action: manipulation;
         }
 
         .glass-panel {
@@ -53,29 +59,29 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Header -->
-    <header class="bg-slate-900 border-b border-slate-700 p-4 shadow-lg z-10 relative">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- Header (ปรับให้ Sticky ล็อกอยู่ด้านบนเสมอ) -->
+    <header class="bg-slate-900 border-b border-slate-700 p-4 shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center gap-3">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-xl">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-xl flex-shrink-0">
                     🤔
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Atomic God Mode</h1>
-                    <p class="text-xs text-slate-400">เครื่องมือที่ช่วยให้บรรลุอรหันต์ขั้น 8 เมื่อความเข้าใจระดับอะตอม นำไปสู่การหลุดพ้น</p>
+                    <h1 class="text-lg lg:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Atomic God Mode</h1>
+                    <p class="text-[10px] lg:text-xs text-slate-400">เครื่องมือที่ช่วยให้บรรลุอรหันต์ขั้น 8 เมื่อความเข้าใจระดับอะตอม นำไปสู่การหลุดพ้น</p>
                 </div>
             </div>
             
-            <div class="flex flex-wrap items-center justify-center gap-3">
+            <div class="flex flex-wrap items-center justify-center gap-2">
                 <!-- Force Toggle -->
                 <button id="btn-force" onclick="toggleForces()" class="px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm transition-all flex items-center gap-2">
-                    <i class="fa-solid fa-bolt"></i> <span>แสดงแรงกระทำ</span>
+                    <i class="fa-solid fa-bolt"></i> <span class="hidden sm:inline">แสดงแรงกระทำ</span><span class="sm:hidden">แรง</span>
                 </button>
 
                 <!-- Zoom Controls -->
                 <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-inner">
                     <button onclick="adjustZoom(-0.1)" class="w-8 h-8 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="ย่อขนาด"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
-                    <span id="zoom-level-text" class="text-xs text-slate-300 w-12 text-center font-mono select-none">100%</span>
+                    <span id="zoom-level-text" class="text-xs text-slate-300 w-10 text-center font-mono select-none">100%</span>
                     <button onclick="adjustZoom(0.1)" class="w-8 h-8 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="ขยายขนาด"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
                     <div class="w-px h-5 bg-slate-600 mx-1"></div>
                     <button onclick="resetZoom()" class="w-8 h-8 rounded text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="คืนค่าเดิม"><i class="fa-solid fa-rotate-right"></i></button>
@@ -83,11 +89,11 @@
 
                 <!-- Mode Toggle -->
                 <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-                    <button id="mode-single" class="px-4 py-2 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-md" onclick="switchMode('single')">
-                        <i class="fa-solid fa-circle-dot mr-2"></i>เดี่ยว
+                    <button id="mode-single" class="px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-all bg-indigo-600 text-white shadow-md" onclick="switchMode('single')">
+                        <i class="fa-solid fa-circle-dot mr-1"></i>เดี่ยว
                     </button>
-                    <button id="mode-compare" class="px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white" onclick="switchMode('compare')">
-                        <i class="fa-solid fa-scale-balanced mr-2"></i>เปรียบเทียบ
+                    <button id="mode-compare" class="px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-all text-slate-400 hover:text-white" onclick="switchMode('compare')">
+                        <i class="fa-solid fa-scale-balanced mr-1"></i>เทียบ
                     </button>
                 </div>
             </div>
@@ -95,98 +101,98 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow p-4 md:p-6 flex flex-col items-center justify-center w-full max-w-7xl mx-auto relative">
+    <main class="flex-grow p-2 sm:p-4 md:p-6 flex flex-col items-center justify-center w-full max-w-7xl mx-auto relative">
         
         <!-- Background decorative elements -->
         <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
         <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
 
         <!-- Single Mode Container -->
-        <div id="container-single" class="w-full flex flex-col lg:flex-row gap-6 transition-all duration-500 opacity-100">
-            <!-- Atom Viewer -->
-            <div class="flex-grow glass-panel rounded-2xl overflow-hidden relative flex flex-col min-h-[500px]">
-                <div class="absolute top-4 left-4 z-10 flex gap-2">
-                    <div class="bg-slate-800/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-600 shadow-lg text-sm">
-                        <span class="text-slate-300">ประจุสุทธิ:</span>
-                        <span id="charge-1" class="font-bold ml-1 text-lg">0</span>
+        <div id="container-single" class="w-full flex flex-col lg:flex-row gap-3 lg:gap-6 transition-all duration-500 opacity-100">
+            <!-- Atom Viewer (ปรับความสูงบนมือถือให้เล็กลง) -->
+            <div class="flex-grow glass-panel rounded-2xl overflow-hidden relative flex flex-col min-h-[260px] sm:min-h-[350px] lg:min-h-[500px]">
+                <div class="absolute top-3 left-3 z-10 flex gap-2">
+                    <div class="bg-slate-800/80 backdrop-blur px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-slate-600 shadow-lg text-xs lg:text-sm">
+                        <span class="text-slate-300">ประจุ:</span>
+                        <span id="charge-1" class="font-bold ml-1 text-base lg:text-lg">0</span>
                     </div>
                 </div>
-                <div class="absolute top-4 right-4 z-10 text-right">
-                    <div id="symbol-1" class="text-5xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] symbol-pop">H</div>
-                    <div id="name-1" class="text-slate-300 text-sm mt-1">ไฮโดรเจน (Hydrogen)</div>
+                <div class="absolute top-3 right-3 z-10 text-right">
+                    <div id="symbol-1" class="text-3xl lg:text-5xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] symbol-pop">H</div>
+                    <div id="name-1" class="text-slate-300 text-[10px] lg:text-sm mt-0 lg:mt-1">ไฮโดรเจน</div>
                 </div>
-                <div class="absolute bottom-4 left-0 w-full text-center z-10 pointer-events-none">
-                    <div class="inline-block bg-slate-900/60 backdrop-blur px-4 py-2 rounded-full border border-slate-700/50">
-                        <span class="text-xs text-slate-400 mr-2">แนวโน้มขนาด (อ้างอิง):</span>
-                        <span id="size-indicator-1" class="text-cyan-400 font-mono font-bold">100 หน่วย</span>
+                <div class="absolute bottom-3 left-0 w-full text-center z-10 pointer-events-none">
+                    <div class="inline-block bg-slate-900/60 backdrop-blur px-3 py-1 lg:px-4 lg:py-2 rounded-full border border-slate-700/50">
+                        <span class="text-[10px] lg:text-xs text-slate-400 mr-2">แนวโน้มขนาด:</span>
+                        <span id="size-indicator-1" class="text-cyan-400 font-mono font-bold text-xs lg:text-base">100 หน่วย</span>
                     </div>
                 </div>
                 
                 <canvas id="canvas-1" class="w-full h-full absolute inset-0 cursor-crosshair"></canvas>
             </div>
 
-            <!-- Controls Panel -->
-            <div class="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
+            <!-- Controls Panel (ปรับระยะห่างให้ชิดขึ้นในมือถือ) -->
+            <div class="w-full lg:w-80 flex-shrink-0 flex flex-col gap-3 lg:gap-4">
                 <!-- Element Selector -->
-                <div class="glass-panel p-5 rounded-2xl">
-                    <h2 class="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider"><i class="fa-solid fa-list-ol mr-2 text-indigo-400"></i>เลือกธาตุสำเร็จรูป</h2>
-                    <select id="preset-1" onchange="loadPreset(1, this.value)" class="w-full bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer custom-scrollbar">
+                <div class="glass-panel p-3 lg:p-5 rounded-xl lg:rounded-2xl">
+                    <h2 class="text-xs lg:text-sm font-semibold text-slate-300 mb-2 lg:mb-3 uppercase tracking-wider"><i class="fa-solid fa-list-ol mr-2 text-indigo-400"></i>เลือกธาตุสำเร็จรูป</h2>
+                    <select id="preset-1" onchange="loadPreset(1, this.value)" class="w-full bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm lg:text-base outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer custom-scrollbar">
                         <option value="0">--- โหมดอิสระ (Custom) ---</option>
                     </select>
                 </div>
 
                 <!-- Particle Adjuster -->
-                <div class="glass-panel p-5 rounded-2xl flex-grow flex flex-col gap-6">
-                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-sliders mr-2 text-purple-400"></i>ปรับแต่งอนุภาค</h2>
+                <div class="glass-panel p-3 lg:p-5 rounded-xl lg:rounded-2xl flex-grow flex flex-col gap-3 lg:gap-6">
+                    <h2 class="text-xs lg:text-sm font-semibold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-sliders mr-2 text-purple-400"></i>ปรับแต่งอนุภาค</h2>
                     
                     <!-- Protons -->
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-red-500/20 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-16 h-16 bg-red-500/10 rounded-bl-full -z-10"></div>
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-red-400 font-medium"><i class="fa-solid fa-plus-circle mr-1"></i> โปรตอน (p⁺)</span>
-                            <span id="p-count-1" class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-sm font-bold">1</span>
+                    <div class="bg-slate-800/50 rounded-xl p-3 border border-red-500/20 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-12 h-12 bg-red-500/10 rounded-bl-full -z-10"></div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-red-400 text-xs lg:text-sm font-medium"><i class="fa-solid fa-plus-circle mr-1"></i> โปรตอน (p⁺)</span>
+                            <span id="p-count-1" class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs lg:text-sm font-bold">1</span>
                         </div>
-                        <div class="flex justify-between items-center gap-3">
-                            <button onclick="changeParticle(1, 'p', -1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-red-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
-                            <div class="text-xs text-center text-slate-400 flex-grow">เพิ่มแรงดูด <i class="fa-solid fa-arrow-down text-red-400"></i> หดลง</div>
-                            <button onclick="changeParticle(1, 'p', 1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-red-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
+                        <div class="flex justify-between items-center gap-2 lg:gap-3">
+                            <button onclick="changeParticle(1, 'p', -1)" class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-700 hover:bg-red-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
+                            <div class="text-[10px] lg:text-xs text-center text-slate-400 flex-grow leading-tight">เพิ่มแรงดูด<br class="sm:hidden"><i class="fa-solid fa-arrow-down text-red-400 lg:mx-1"></i>หดลง</div>
+                            <button onclick="changeParticle(1, 'p', 1)" class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-700 hover:bg-red-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
 
                     <!-- Electrons -->
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-blue-500/20 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-bl-full -z-10"></div>
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-blue-400 font-medium"><i class="fa-solid fa-minus-circle mr-1"></i> อิเล็กตรอน (e⁻)</span>
-                            <span id="e-count-1" class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-sm font-bold">1</span>
+                    <div class="bg-slate-800/50 rounded-xl p-3 border border-blue-500/20 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-12 h-12 bg-blue-500/10 rounded-bl-full -z-10"></div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-blue-400 text-xs lg:text-sm font-medium"><i class="fa-solid fa-minus-circle mr-1"></i> อิเล็กตรอน (e⁻)</span>
+                            <span id="e-count-1" class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs lg:text-sm font-bold">1</span>
                         </div>
-                        <div class="flex justify-between items-center gap-3">
-                            <button onclick="changeParticle(1, 'e', -1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-blue-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
-                            <div class="text-xs text-center text-slate-400 flex-grow">เพิ่มแรงผลัก <i class="fa-solid fa-arrow-up text-blue-400"></i> ขยายออก</div>
-                            <button onclick="changeParticle(1, 'e', 1)" class="w-10 h-10 rounded-full bg-slate-700 hover:bg-blue-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
+                        <div class="flex justify-between items-center gap-2 lg:gap-3">
+                            <button onclick="changeParticle(1, 'e', -1)" class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-700 hover:bg-blue-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-minus"></i></button>
+                            <div class="text-[10px] lg:text-xs text-center text-slate-400 flex-grow leading-tight">เพิ่มแรงผลัก<br class="sm:hidden"><i class="fa-solid fa-arrow-up text-blue-400 lg:mx-1"></i>ขยายออก</div>
+                            <button onclick="changeParticle(1, 'e', 1)" class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-700 hover:bg-blue-600/30 text-white transition-colors border border-slate-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
 
                     <!-- Shell Info -->
-                    <div class="mt-auto pt-4 border-t border-slate-700 text-center">
-                        <p class="text-xs text-slate-400 mb-1">การจัดเรียงอิเล็กตรอน (Electron Config)</p>
-                        <div id="config-1" class="font-mono text-indigo-300 font-bold text-lg tracking-widest">1</div>
+                    <div class="mt-auto pt-2 lg:pt-4 border-t border-slate-700 text-center">
+                        <p class="text-[10px] lg:text-xs text-slate-400 mb-1">การจัดเรียงอิเล็กตรอน</p>
+                        <div id="config-1" class="font-mono text-indigo-300 font-bold text-sm lg:text-lg tracking-widest">1</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Compare Mode Container (Hidden by default) -->
-        <div id="container-compare" class="w-full hidden flex-col md:flex-row gap-4 h-[600px] transition-all duration-500 opacity-0">
+        <!-- Compare Mode Container (ปรับความสูงบนมือถือให้ยืดหยุ่น) -->
+        <div id="container-compare" class="w-full hidden flex-col lg:flex-row gap-4 lg:h-[600px] transition-all duration-500 opacity-0">
             <!-- Inject via JS -->
         </div>
 
     </main>
 
     <!-- Footer Credit -->
-    <footer class="w-full bg-slate-900 border-t border-slate-800 py-4 mt-auto z-10 relative">
+    <footer class="w-full bg-slate-900 border-t border-slate-800 py-3 mt-auto z-10 relative">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-sm text-slate-500">
+            <p class="text-xs sm:text-sm text-slate-500">
                 พัฒนาโดย <span class="text-indigo-400 font-semibold tracking-wide">lnwtoon005</span>
             </p>
         </div>
@@ -239,10 +245,10 @@
             const btn = document.getElementById('btn-force');
             if (showForces) {
                 btn.classList.add('force-active');
-                btn.innerHTML = `<i class="fa-solid fa-bolt text-yellow-400"></i> <span class="text-yellow-400">ซ่อนแรงกระทำ</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-bolt text-yellow-400"></i> <span class="text-yellow-400 hidden sm:inline">ซ่อนแรงกระทำ</span><span class="text-yellow-400 sm:hidden">ซ่อน</span>`;
             } else {
                 btn.classList.remove('force-active');
-                btn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span>แสดงแรงกระทำ</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span class="hidden sm:inline">แสดงแรงกระทำ</span><span class="sm:hidden">แรง</span>`;
             }
         }
 
@@ -688,65 +694,66 @@
         function setupCompareUI() {
             const compareContainer = document.getElementById('container-compare');
             
+            // ปรับระยะห่างและฟอนต์สำหรับโหมดเปรียบเทียบบนมือถือ
             const leftCol = `
-                <div class="flex-1 flex flex-col gap-3">
-                    <div class="glass-panel p-3 rounded-xl flex flex-col gap-3">
-                        <select id="preset-c1" onchange="loadPreset(1, this.value)" class="bg-slate-800 border border-slate-600 text-white rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-500">
+                <div class="flex-1 flex flex-col gap-2 lg:gap-3">
+                    <div class="glass-panel p-2 lg:p-3 rounded-xl flex flex-col gap-2 lg:gap-3">
+                        <select id="preset-c1" onchange="loadPreset(1, this.value)" class="bg-slate-800 border border-slate-600 text-white rounded-lg px-2 py-1.5 text-[10px] sm:text-xs lg:text-sm outline-none focus:border-indigo-500">
                             <option value="0">กำหนดเอง (Custom)</option>
                         </select>
-                        <div class="flex justify-between items-center text-sm bg-slate-900/50 p-2 rounded-lg border border-slate-700">
-                            <div class="flex items-center gap-1">
-                                <button onclick="changeParticle(1, 'p', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">-</button>
-                                <span class="text-red-400 w-12 text-center font-bold" id="p-count-c1">1 p⁺</span>
-                                <button onclick="changeParticle(1, 'p', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">+</button>
+                        <div class="flex justify-between items-center bg-slate-900/50 p-1.5 lg:p-2 rounded-lg border border-slate-700">
+                            <div class="flex items-center gap-0.5 lg:gap-1">
+                                <button onclick="changeParticle(1, 'p', -1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors text-xs">-</button>
+                                <span class="text-red-400 w-8 lg:w-12 text-center font-bold text-[10px] sm:text-xs" id="p-count-c1">1 p⁺</span>
+                                <button onclick="changeParticle(1, 'p', 1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors text-xs">+</button>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <button onclick="changeParticle(1, 'e', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">-</button>
-                                <span class="text-blue-400 w-12 text-center font-bold" id="e-count-c1">1 e⁻</span>
-                                <button onclick="changeParticle(1, 'e', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">+</button>
+                            <div class="flex items-center gap-0.5 lg:gap-1">
+                                <button onclick="changeParticle(1, 'e', -1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors text-xs">-</button>
+                                <span class="text-blue-400 w-8 lg:w-12 text-center font-bold text-[10px] sm:text-xs" id="e-count-c1">1 e⁻</span>
+                                <button onclick="changeParticle(1, 'e', 1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors text-xs">+</button>
                             </div>
                         </div>
                     </div>
-                    <div class="flex-grow glass-panel rounded-2xl relative min-h-[350px] overflow-hidden flex items-center justify-center" id="canvas-wrapper-1">
+                    <div class="flex-grow glass-panel rounded-xl lg:rounded-2xl relative min-h-[180px] sm:min-h-[250px] lg:min-h-[350px] overflow-hidden flex items-center justify-center" id="canvas-wrapper-1">
                         <!-- Canvas 1 moves here -->
                     </div>
-                    <div class="p-3 glass-panel rounded-xl flex justify-between items-center px-6">
-                        <div class="text-3xl font-bold text-white drop-shadow-lg" id="symbol-c1">H</div>
+                    <div class="p-2 lg:p-3 glass-panel rounded-xl flex justify-between items-center px-4 lg:px-6">
+                        <div class="text-xl lg:text-3xl font-bold text-white drop-shadow-lg" id="symbol-c1">H</div>
                         <div class="text-right">
-                            <div class="text-sm text-slate-300">ประจุ: <span id="charge-c1" class="font-bold text-lg">0</span></div>
-                            <div class="text-xs text-slate-400 mt-1">ขนาด: <span id="size-indicator-c1" class="text-cyan-400 font-bold"></span></div>
+                            <div class="text-[10px] sm:text-xs lg:text-sm text-slate-300">ประจุ: <span id="charge-c1" class="font-bold text-sm lg:text-lg">0</span></div>
+                            <div class="text-[9px] sm:text-[10px] lg:text-xs text-slate-400 mt-0 lg:mt-1">ขนาด: <span id="size-indicator-c1" class="text-cyan-400 font-bold"></span></div>
                         </div>
                     </div>
                 </div>
             `;
 
             const rightCol = `
-                <div class="flex-1 flex flex-col gap-3">
-                    <div class="glass-panel p-3 rounded-xl flex flex-col gap-3">
-                        <select id="preset-2" onchange="loadPreset(2, this.value)" class="bg-slate-800 border border-slate-600 text-white rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-500">
+                <div class="flex-1 flex flex-col gap-2 lg:gap-3">
+                    <div class="glass-panel p-2 lg:p-3 rounded-xl flex flex-col gap-2 lg:gap-3">
+                        <select id="preset-2" onchange="loadPreset(2, this.value)" class="bg-slate-800 border border-slate-600 text-white rounded-lg px-2 py-1.5 text-[10px] sm:text-xs lg:text-sm outline-none focus:border-indigo-500">
                             <option value="0">กำหนดเอง (Custom)</option>
                         </select>
-                        <div class="flex justify-between items-center text-sm bg-slate-900/50 p-2 rounded-lg border border-slate-700">
-                            <div class="flex items-center gap-1">
-                                <button onclick="changeParticle(2, 'p', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">-</button>
-                                <span class="text-red-400 w-12 text-center font-bold" id="p-count-2">2 p⁺</span>
-                                <button onclick="changeParticle(2, 'p', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors">+</button>
+                        <div class="flex justify-between items-center bg-slate-900/50 p-1.5 lg:p-2 rounded-lg border border-slate-700">
+                            <div class="flex items-center gap-0.5 lg:gap-1">
+                                <button onclick="changeParticle(2, 'p', -1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors text-xs">-</button>
+                                <span class="text-red-400 w-8 lg:w-12 text-center font-bold text-[10px] sm:text-xs" id="p-count-2">2 p⁺</span>
+                                <button onclick="changeParticle(2, 'p', 1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-red-600/50 text-white font-bold transition-colors text-xs">+</button>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <button onclick="changeParticle(2, 'e', -1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">-</button>
-                                <span class="text-blue-400 w-12 text-center font-bold" id="e-count-2">2 e⁻</span>
-                                <button onclick="changeParticle(2, 'e', 1)" class="w-7 h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors">+</button>
+                            <div class="flex items-center gap-0.5 lg:gap-1">
+                                <button onclick="changeParticle(2, 'e', -1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors text-xs">-</button>
+                                <span class="text-blue-400 w-8 lg:w-12 text-center font-bold text-[10px] sm:text-xs" id="e-count-2">2 e⁻</span>
+                                <button onclick="changeParticle(2, 'e', 1)" class="w-6 h-6 lg:w-7 lg:h-7 rounded bg-slate-700 hover:bg-blue-600/50 text-white font-bold transition-colors text-xs">+</button>
                             </div>
                         </div>
                     </div>
-                    <div class="flex-grow glass-panel rounded-2xl relative min-h-[350px] overflow-hidden flex items-center justify-center">
+                    <div class="flex-grow glass-panel rounded-xl lg:rounded-2xl relative min-h-[180px] sm:min-h-[250px] lg:min-h-[350px] overflow-hidden flex items-center justify-center">
                         <canvas id="canvas-2" class="w-full h-full absolute inset-0"></canvas>
                     </div>
-                    <div class="p-3 glass-panel rounded-xl flex justify-between items-center px-6">
-                        <div class="text-3xl font-bold text-white drop-shadow-lg" id="symbol-2">He</div>
+                    <div class="p-2 lg:p-3 glass-panel rounded-xl flex justify-between items-center px-4 lg:px-6">
+                        <div class="text-xl lg:text-3xl font-bold text-white drop-shadow-lg" id="symbol-2">He</div>
                         <div class="text-right">
-                            <div class="text-sm text-slate-300">ประจุ: <span id="charge-2" class="font-bold text-lg">0</span></div>
-                            <div class="text-xs text-slate-400 mt-1">ขนาด: <span id="size-indicator-2" class="text-cyan-400 font-bold"></span></div>
+                            <div class="text-[10px] sm:text-xs lg:text-sm text-slate-300">ประจุ: <span id="charge-2" class="font-bold text-sm lg:text-lg">0</span></div>
+                            <div class="text-[9px] sm:text-[10px] lg:text-xs text-slate-400 mt-0 lg:mt-1">ขนาด: <span id="size-indicator-2" class="text-cyan-400 font-bold"></span></div>
                         </div>
                     </div>
                 </div>
@@ -764,8 +771,8 @@
             const canvas1 = document.getElementById('canvas-1');
 
             if (mode === 'single') {
-                btnSingle.className = "px-4 py-2 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-md";
-                btnCompare.className = "px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white";
+                btnSingle.className = "px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-all bg-indigo-600 text-white shadow-md";
+                btnCompare.className = "px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-all text-slate-400 hover:text-white";
                 
                 containerCompare.classList.add('opacity-0');
                 setTimeout(() => {
@@ -786,8 +793,8 @@
                 }, 300);
 
             } else {
-                btnCompare.className = "px-4 py-2 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white shadow-md";
-                btnSingle.className = "px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-400 hover:text-white";
+                btnCompare.className = "px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-all bg-indigo-600 text-white shadow-md";
+                btnSingle.className = "px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-xs lg:text-sm font-medium transition-all text-slate-400 hover:text-white";
                 
                 containerSingle.classList.remove('opacity-100');
                 containerSingle.classList.add('opacity-0');
